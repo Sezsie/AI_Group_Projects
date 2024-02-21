@@ -6,6 +6,7 @@
 # All done manually, since the point is to understand the math behind it.
 
 import os
+import numpy as np
 
 '''
 Important data information. Each data point in the data set is ordered from left to right as follows:
@@ -126,8 +127,127 @@ for column_name in column_names:
     print(column_name, ":", grab_data(data_dict, column_name)[:5])
 print("\n\n")
     
-# all done for now, will continue later.
-    
-    
-    
-    
+# splitting the data into training and validation sets
+# Extract the last 50 rows
+validation_set = data_dict[-50:]
+
+# Separate the rest of the data
+training_set = data_dict[:-50]
+
+# ( THIS WAS JUST FOR TESTING...)
+# # Output or process the separated data
+# print("Rest of the data:")
+# for line in training_set:
+#     print(str(line).strip())
+
+# print("\nLast 50 rows:")
+# for line in validation_set:
+#     print(str(line).strip())
+
+
+# for column_name in column_names:
+#     print(column_name, ":", grab_data(validation_set, column_name)[:5])
+# print("\n\n")
+
+# normalizing training set (maybe working?? THIS NEEDS NUMPY)
+numeric_training_set = np.array(training_set, dtype=float)
+
+training_mean = np.mean(numeric_training_set)
+training_std_dev = np.std(numeric_training_set)
+
+normalized_training_setNP = (numeric_training_set - training_mean) / training_std_dev
+
+# I converted the normalized training set back to a list just in case
+normalized_training_set = normalized_training_setNP.tolist()
+
+# normalizing validation set (maybe working?? THIS NEEDS NUMPY)
+numeric_validation_set = np.array(validation_set, dtype=float)
+
+validation_mean = np.mean(numeric_validation_set)
+validation_std_dev = np.std(numeric_validation_set)
+
+normalized_validation_setNP = (numeric_validation_set - validation_mean) / validation_std_dev
+
+# I converted the normalized validation set back to a list just in case
+normalized_validation_set = normalized_validation_setNP.tolist()
+
+# Initial thetas
+theta0 = 0.0
+theta1 = 0.0
+theta2 = 0.0
+
+# Initial alpha / learning rate 
+alpha = 0.01          # the homework's initial value
+
+# Initial stopping accuracy
+goalAccuracy = 0.01   # the homework's initial value
+
+# (THIS IS FOR part a...)
+
+# AGE data
+age_data = np.array(grab_data(normalized_training_set, "AGE"))
+
+# TAX data
+tax_data = np.array(grab_data(normalized_training_set, "TAX"))
+
+# MEDV data 
+medv_data = np.array(grab_data(normalized_training_set, "MEDV"))
+
+# Setting up x (the features including an intercept of 1 for x0, x1 is the age, and x2 is the tax)
+x = np.column_stack((np.ones_like(age_data), age_data, tax_data))
+
+# Gradient Descent
+def batchGradientDescent(x, y, theta0, theta1, theta2, alpha, goalAccuracy):
+
+    # first find m, the number of training data sets
+    m = len(y)
+
+     # while the accuracy is less than or equal to the goal accuracy of 0.01
+    while True:
+        # perform the gradient descent formula
+        # first find the hypothesis or h0(x^i)
+        hypothesis = theta0 + theta1 * x[:,1] + theta2 * x[:,2]
+
+        # then find the derivative by subtracting
+        # y^i with the hypothesis
+        derivative = hypothesis - y
+
+        # Find the gradients
+        gradient0 = (1/m) * np.sum(derivative)
+        gradient1 = (1/m) * np.sum(derivative * x[:,1])
+        gradient2 = (1/m) * np.sum(derivative * x[:,2])
+        
+        # Update the thetas
+        theta0New = theta0 - alpha * gradient0
+        theta1New = theta1 - alpha * gradient1
+        theta2New = theta2 - alpha * gradient2
+        
+        # Calculate accuracy using the convergence formula
+        # and the numpy absolute value function
+        accuracy = np.sum(np.abs([theta0New - theta0, theta1New - theta1, theta2New - theta2]))
+        
+        # if the accuracy is less than or equal to
+        # 0.01
+        if accuracy <= goalAccuracy:
+            break
+
+        # set the current new thetas
+        # to the original ones
+        theta0 = theta0New
+        theta1 = theta1New
+        theta2 = theta2New
+
+    # return the final thetas found from gradient descent
+    return theta0, theta1, theta2
+
+# Call the function in order to get the final 
+# results for the theta parameters
+final_theta0, final_theta1, final_theta2 = batchGradientDescent(x, medv_data, theta0, theta1, theta2, alpha, goalAccuracy)
+
+# Print the final theta parameters to the screen
+print("Final theta0:", final_theta0)
+print("Final theta1:", final_theta1)
+print("Final theta2:", final_theta2)
+
+# I need to double check those theta values using the library method but essentially 
+# I took my batch gradient descent code from HW1 and have now added a new theta.
