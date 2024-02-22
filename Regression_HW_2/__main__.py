@@ -170,6 +170,28 @@ def normal_equation(x, y):
     """
     return np.linalg.inv(x.T.dot(x)).dot(x.T).dot(y)
 
+def feed_data_into_arrays(data_dict, column_names):
+    """
+    Feeds the data from the data_dict into the destination_dict using the column names as keys.
+    Returns the destination_dict with the data fed into it.
+
+    Parameters:
+    - data_dict: The dictionary containing the data.
+    - column_names: The list of column names.
+
+    Returns:
+    - The destination_dict with the data fed into it.
+    
+    Usage: 
+    feed_data_into_arrays(normalized_training_set, column_names, data_arrays) where data_arrays is an empty dictionary.
+    """
+    destination_dict = {}
+    
+    for feature in column_names:
+        if feature != "MEDV":
+            destination_dict[feature] = np.array(grab_data(data_dict, feature))
+    return destination_dict
+
 
 #-------------------------------------------------------------------------
 # Variables / loading and processing the data:
@@ -258,47 +280,29 @@ mse_2a = calculate_MSE(x_2a_val, medv_data_val, final_thetas_2a)
 
 
 #-------------------------------------------------------------------------
-# PART ONE B:
+# PART TWO B:
 #-------------------------------------------------------------------------
 
 # in part B, we will be factoring in all the features of the dataset.
 
-crim_data = np.array(grab_data(normalized_training_set, "CRIM"))
-zn_data = np.array(grab_data(normalized_training_set, "ZN"))
-indus_data = np.array(grab_data(normalized_training_set, "INDUS"))
-chas_data = np.array(grab_data(normalized_training_set, "CHAS"))
-nox_data = np.array(grab_data(normalized_training_set, "NOX"))
-rm_data = np.array(grab_data(normalized_training_set, "RM"))
-dis_data = np.array(grab_data(normalized_training_set, "DIS"))
-rad_data = np.array(grab_data(normalized_training_set, "RAD"))
-ptratio_data = np.array(grab_data(normalized_training_set, "PTRATIO"))
-b_data = np.array(grab_data(normalized_training_set, "B"))
-lstat_data = np.array(grab_data(normalized_training_set, "LSTAT"))
+# initialize the data arrays for the training set
+data_arrays = feed_data_into_arrays(normalized_training_set, column_names)
 
 # Setting up x (the features including an intercept of 1 for x0, x1 is the crim, and x2 is the zn...etc)
-x_2b = np.column_stack((np.ones_like(crim_data), crim_data, zn_data, indus_data, chas_data, nox_data, rm_data, age_data, dis_data, rad_data, tax_data, ptratio_data, b_data, lstat_data))
+x_2b = np.column_stack((np.ones_like(data_arrays["CRIM"]), data_arrays["CRIM"], data_arrays["ZN"], data_arrays["INDUS"], data_arrays["CHAS"], data_arrays["NOX"], data_arrays["RM"], data_arrays["AGE"], data_arrays["DIS"], data_arrays["RAD"], data_arrays["TAX"], data_arrays["PTRATIO"], data_arrays["B"], data_arrays["LSTAT"]))
 
 # Initial theta values
-initial_thetas_test = np.zeros(14)
+initial_thetas_test = np.zeros(len(data_arrays) + 1)  # +1 for the intercept
 
 # Call the function in order to get the final 
 # results for the theta parameters
 final_thetas_2b = batch_gradient_descent(x_2b, medv_data, initial_thetas_test, alpha, goal_accuracy)
 
-crim_data_val = np.array(grab_data(normalized_validation_set, "CRIM"))
-zn_data_val = np.array(grab_data(normalized_validation_set, "ZN"))
-indus_data_val = np.array(grab_data(normalized_validation_set, "INDUS"))
-chas_data_val = np.array(grab_data(normalized_validation_set, "CHAS"))
-nox_data_val = np.array(grab_data(normalized_validation_set, "NOX"))
-rm_data_val = np.array(grab_data(normalized_validation_set, "RM"))
-dis_data_val = np.array(grab_data(normalized_validation_set, "DIS"))
-rad_data_val = np.array(grab_data(normalized_validation_set, "RAD"))
-ptratio_data_val = np.array(grab_data(normalized_validation_set, "PTRATIO"))
-b_data_val = np.array(grab_data(normalized_validation_set, "B"))
-lstat_data_val = np.array(grab_data(normalized_validation_set, "LSTAT"))
+# initialize the data arrays for the validation set
+validation_arrays = feed_data_into_arrays(normalized_validation_set, column_names)
 
-# Setting up x (the features including an intercept of 1 for x0, x1 is the crim, and x2 is the zn...etc)
-x_2b_val = np.column_stack((np.ones_like(crim_data_val), crim_data_val, zn_data_val, indus_data_val, chas_data_val, nox_data_val, rm_data_val, age_data_val, dis_data_val, rad_data_val, tax_data_val, ptratio_data_val, b_data_val, lstat_data_val))
+# setting up x (the features including an intercept of 1 for x0, x1 is the crim, and x2 is the zn...etc)
+x_2b_val = np.column_stack((np.ones_like(validation_arrays["CRIM"]), validation_arrays["CRIM"], validation_arrays["ZN"], validation_arrays["INDUS"], validation_arrays["CHAS"], validation_arrays["NOX"], validation_arrays["RM"], validation_arrays["AGE"], validation_arrays["DIS"], validation_arrays["RAD"], validation_arrays["TAX"], validation_arrays["PTRATIO"], validation_arrays["B"], validation_arrays["LSTAT"]))
 
 # use the final thetas to calculate the mean squared error
 mse_2b = calculate_MSE(x_2b_val, medv_data_val, final_thetas_2b)
