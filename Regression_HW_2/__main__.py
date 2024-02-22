@@ -217,14 +217,9 @@ def batchGradientDescent(X, y, thetas, alpha, goalAccuracy):
     
     return thetas
 
+
 # load data 
 data_dict = persistent_load(cleaned_dataset)
-
-# since we have the hard-coded column names, we can just use the index of the column name to get the data from the dataset.
-# ill print out the first 5 data points for each column to show that the data was loaded correctly.
-for column_name in column_names:
-    print(column_name, ":", grab_data(data_dict, column_name)[:5])
-print("\n\n")
     
 # splitting the data into training and validation sets
 # Extract the last 50 rows
@@ -233,20 +228,6 @@ validation_set = data_dict[-50:]
 # Separate the rest of the data
 training_set = data_dict[:-50]
 
-# ( THIS WAS JUST FOR TESTING...)
-# # Output or process the separated data
-# print("Rest of the data:")
-# for line in training_set:
-#     print(str(line).strip())
-
-# print("\nLast 50 rows:")
-# for line in validation_set:
-#     print(str(line).strip())
-
-
-# for column_name in column_names:
-#     print(column_name, ":", grab_data(validation_set, column_name)[:5])
-# print("\n\n")
 
 # normalizing training set (maybe working?? THIS NEEDS NUMPY)
 numeric_training_set = np.array(training_set, dtype=float)
