@@ -1,0 +1,17 @@
+Multivariate Linear Regression For Boston Housing Data
+
+PART ONE: Gradient Descent and Mean Squared Error
+2a: Predicting MEDV based on AGE and TAX
+Final thetas of 2a: [-0.00598791 -0.00020523 -0.01486594]
+Mean Squared Error of 2a: 0.046647351613097465
+
+2b: Predicting MEDV based on all features
+Final thetas of 2b: [-0.01597693  0.00713683  0.00643748  0.00633274  0.00763733  0.0075789
+  0.00692322 -0.00055569  0.0071933   0.00656402 -0.03926515  0.00546757
+ -0.03292155  0.00600779]
+Mean Squared Error of 2b: 0.010969251162690442
+
+PART TWO: Normal Equation and Mean Squared Error
+2a: Predicting MEDV based on AGE and TAX
+Final thetas of 2a using the normal equation: [-0.25458241 -0.05268839 -0.02300722]
+Mean Squared Error of 2a using the normal equation: 0.0018416381023807831
