@@ -63,9 +63,7 @@ def preprocess_data(file_path):
     
     print("Data has been cleaned and saved to", cleaned_path)
     return cleaned_path
-
-    
-    
+ 
 # relative path to the data file, assuming it's on the desktop.
 user_desktop = os.path.join(os.path.expanduser("~"), "Desktop")
 
@@ -120,18 +118,8 @@ def grab_data(dataDict, column_name):
 
 # QOL FUNCTIONS #
 
-def predict(theta_values, features):
-    """
-    Predicts the MEDV value for a given set of features.
-
-    Parameters:
-    - theta_values: The theta values obtained from the gradient descent function.
-    - features: The feature values for the new data point. This should be a 1D array.
-
-    Returns:
-    - The predicted MEDV value.
-    """
-    return np.dot(theta_values, features)
+def calculate_prediction(final_thetas, x):
+    return np.dot(final_thetas, x.T)
 
 def normalize_data(data):
     """
@@ -161,45 +149,6 @@ def unnormalize_data(normalized_value, mean, std_dev):
     """
     return (normalized_value * std_dev) + mean
 
-def compare_predictions(training_features, training_target, validation_features, validation_target, final_thetas):
-    """
-    Compares the predicted values to the actual values using the validation set.
-
-    Parameters:
-    - training_features: The features used for training the model.
-    - training_target: The target values used for training the model.
-    - validation_features: The features used for validation.
-    - validation_target: The target values used for validation.
-    - final_thetas: The theta values obtained from the gradient descent function.
-
-    Returns:
-    - A list of tuples, where each tuple contains the predicted and actual values for a given data point.
-    
-    Usage: 
-    compare_predictions(training_features, training_target, validation_features, validation_target, final_thetas) where the training and validation features and targets are numpy arrays and final_thetas is a list of theta values.
-    """
-
-# calculate MSE
-def calculateMSE(x, y, theta0, theta1, theta2):
-    # find m, the number of training data sets
-    m = len(y)
-    
-    # find the hypothesis or h0(x^i)
-    hypothesis = theta0 + theta1 * x[:,1] + theta2 * x[:,2]
-    
-    # find the derivative by subtracting
-    # y^i with the hypothesis
-    derivative = hypothesis - y
-    
-    # find the sum of the squares of the derivative
-    sumOfSquares = np.sum(derivative ** 2)
-    
-    # find the mean squared error
-    mse = (1/(2*m)) * sumOfSquares
-    
-    # return the mean squared error
-    return mse
-
 # Gradient Descent
 def batchGradientDescent(X, y, thetas, alpha, goalAccuracy):
     m = len(y)
@@ -217,6 +166,22 @@ def batchGradientDescent(X, y, thetas, alpha, goalAccuracy):
     
     return thetas
 
+def plot_predictions_vs_actual(X, y, thetas):
+    predictions = X.dot(thetas)
+    plt.figure(figsize=(10, 6))
+    plt.scatter(y, predictions, alpha=0.5)
+    plt.title("Predicted vs. Actual Values")
+    plt.xlabel("Actual Values")
+    plt.ylabel("Predicted Values")
+    plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', lw=4)  # diagonal line for reference
+    plt.show()
+
+
+def calculateMSE(X, y, thetas):
+    predictions = X.dot(thetas)
+    errors = predictions - y
+    mse = (1/(2*len(y))) * np.sum(errors ** 2)
+    return mse
 
 # load data 
 data_dict = persistent_load(cleaned_dataset)
@@ -281,10 +246,59 @@ final_thetas = batchGradientDescent(x, medv_data, initial_thetas, alpha, goalAcc
 
 
 # Print the final theta parameters to the screen
-print("Final thetas:", final_thetas)
+print("Final thetas of part A:", final_thetas)
 
 # use the final thetas to calculate the mean squared error
-mse = calculateMSE(x, medv_data, final_thetas[0], final_thetas[1], final_thetas[2])
+mse = calculateMSE(x, medv_data, final_thetas)
 print("Mean Squared Error:", mse)
 
+# Part A Visualizations
+# graph the predicted values against the actual values and color code them
+plot_predictions_vs_actual(x, medv_data, final_thetas)
 
+# Now onto part B...
+
+# in part B, we will be factoring in all the features of the dataset.
+
+data_np = np.array(data_dict, dtype=float)
+
+# split the dataset into training and validation sets without shuffling
+
+# first, we grab the last 50 samples for the validation set
+training_data = numeric_training_set[:-50]
+validation_data = numeric_training_set[-50:]
+
+# normalize features and target for training data
+training_features = training_data[:, :-1]  # Exclude MEDV
+training_target = training_data[:, -1]  # Only MEDV
+
+training_mean = np.mean(training_features, axis=0)
+training_std = np.std(training_features, axis=0)
+
+normalized_training_features = (training_features - training_mean) / training_std
+
+# normalize validation data using training mean and std
+validation_features = validation_data[:, :-1]
+validation_target = validation_data[:, -1]
+
+normalized_validation_features = (validation_features - training_mean) / training_std
+
+# prepare the training and validation sets for model training
+X_train = np.hstack([np.ones((normalized_training_features.shape[0], 1)), normalized_training_features])
+y_train = training_target
+
+X_validation = np.hstack([np.ones((normalized_validation_features.shape[0], 1)), normalized_validation_features])
+y_validation = validation_target
+
+# initial theta values
+initial_thetas = np.zeros(X_train.shape[1])
+
+# gradient Descent
+final_thetas = batchGradientDescent(X_train, y_train, initial_thetas, alpha, goalAccuracy)
+
+# mean Squared Error for the validation set
+mse_validation = calculateMSE(X_validation, y_validation, final_thetas)
+print("Mean Squared Error on the validation set:", mse_validation)
+
+# Visualization for model performance on the validation set
+plot_predictions_vs_actual(X_validation, y_validation, final_thetas)
