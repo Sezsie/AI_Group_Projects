@@ -117,9 +117,90 @@ def grab_data(dataDict, column_name):
     column_data = [float(sample[index]) for sample in dataDict]
     return column_data
 
+# QOL FUNCTIONS #
+
+def predict(theta_values, features):
+    """
+    Predicts the MEDV value for a given set of features.
+
+    Parameters:
+    - theta_values: The theta values obtained from the gradient descent function.
+    - features: The feature values for the new data point. This should be a 1D array.
+
+    Returns:
+    - The predicted MEDV value.
+    """
+    return np.dot(theta_values, features)
+
+def normalize_data(data):
+    """
+    Normalizes the data by subtracting the mean and dividing by the standard deviation.
+
+    Parameters:
+    - data: The data to be normalized.
+
+    Returns:
+    - The normalized data.
+    """
+    mean = np.mean(data)
+    std_dev = np.std(data)
+    return (data - mean) / std_dev
+
+def unnormalize_data(normalized_value, mean, std_dev):
+    """
+    Unnormalizes a single value using the specified mean and standard deviation.
+
+    Parameters:
+    - normalized_value: The normalized data value.
+    - mean: The mean used for normalization.
+    - std_dev: The standard deviation used for normalization.
+
+    Returns:
+    - The unnormalized data value.
+    """
+    return (normalized_value * std_dev) + mean
+
+def compare_predictions(training_features, training_target, validation_features, validation_target, final_thetas):
+    """
+    Compares the predicted values to the actual values using the validation set.
+
+    Parameters:
+    - training_features: The features used for training the model.
+    - training_target: The target values used for training the model.
+    - validation_features: The features used for validation.
+    - validation_target: The target values used for validation.
+    - final_thetas: The theta values obtained from the gradient descent function.
+
+    Returns:
+    - A list of tuples, where each tuple contains the predicted and actual values for a given data point.
+    
+    Usage: 
+    compare_predictions(training_features, training_target, validation_features, validation_target, final_thetas) where the training and validation features and targets are numpy arrays and final_thetas is a list of theta values.
+    """
+
+# calculate MSE
+def calculateMSE(x, y, theta0, theta1, theta2):
+    # find m, the number of training data sets
+    m = len(y)
+    
+    # find the hypothesis or h0(x^i)
+    hypothesis = theta0 + theta1 * x[:,1] + theta2 * x[:,2]
+    
+    # find the derivative by subtracting
+    # y^i with the hypothesis
+    derivative = hypothesis - y
+    
+    # find the sum of the squares of the derivative
+    sumOfSquares = np.sum(derivative ** 2)
+    
+    # find the mean squared error
+    mse = (1/(2*m)) * sumOfSquares
+    
+    # return the mean squared error
+    return mse
+
 # load data 
 data_dict = persistent_load(cleaned_dataset)
-crime_data = grab_data(data_dict, "CRIM")
 
 # since we have the hard-coded column names, we can just use the index of the column name to get the data from the dataset.
 # ill print out the first 5 data points for each column to show that the data was loaded correctly.
@@ -251,3 +332,4 @@ print("Final theta2:", final_theta2)
 
 # I need to double check those theta values using the library method but essentially 
 # I took my batch gradient descent code from HW1 and have now added a new theta.
+
