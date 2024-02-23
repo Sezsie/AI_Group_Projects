@@ -27,6 +27,8 @@
 // LSTAT    % lower status of the population
 // MEDV     Median value of owner-occupied homes in $1000's
 // '''
+// We have provided a boston.txt file with this change made in the zipped folder
+// so that you can drag it straight to the desktop.
 //
 // Must have Python, Pylance and or the Python Debugger packs installed within Visual 
 // Studio Code. 
@@ -39,7 +41,8 @@
 // Using the zipped folder, you can unzip the folder and open folder in Visual Studio Code.
 // We have provided a modified boston.txt file that removed the header information as mentioned
 // above.
-// You can drag this boston.txt file to your desktop.
+// You can drag this boston.txt file to your desktop. Please ensure that the pathing 
+// for the boston.txt file on your desktop is STRICTLY like this: C:\Users\user_name\Desktop
 //
 // Running the program:
 // Within Visual Studio Code there are many ways to run the .py file.
@@ -52,7 +55,6 @@
 // Any of these options should be able to run the __main__.py file
 // as long as Python 3.12.1 is installed on the computer.
 //
-// When the program does run, the first plot figure will pop up. In order to see the second plot figure, the first
-// one will have to be closed. Once the second plot figure pops up, the final theta values and the mean squared errors
+// When the program does run, the final theta values and the mean squared errors
 // should appear on your desktop in a output.txt file.
 //

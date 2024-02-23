@@ -9,7 +9,9 @@
 #
 # Purpose: Implement and test multivariable gradient descent
 # to find the parameters for linear regression using the dataset from the
-# boston.txt file. 
+# boston.txt file. Implement and find the mean squared errors using the
+# parameters found from gradient descent. Implement and test the normal equation
+# to find the parameters and calculate the mean squared error as well for a comparison.
 #-------------------------------------------------------------------------
 
 '''
@@ -40,6 +42,8 @@ import numpy as np
 #-------------------------------------------------------------------------
 # Functions:
 #--------------------------------------------------------------------------
+
+# set the boston.txt file to be more readable and easy to collect data from it
 def preprocess_data(file_path):
     """
     Reads a text file, removes newline characters from every odd line
@@ -70,9 +74,8 @@ def preprocess_data(file_path):
     print("Data has been cleaned and saved to", cleaned_path)
     return cleaned_path
  
-# at this point, the file path to the cleaned data should be stored in the variable cleaned_dataset.
+# the file path to the cleaned data should be stored in the variable cleaned_dataset found below.
 # we can now load the data from the file and begin processing it.
-
 def persistent_load(file_path):
     """
     Loads a dataset line by line from a text file into a list of lists, where each entry is a string that relates to the data type.
@@ -89,8 +92,9 @@ def persistent_load(file_path):
     
     return data
 
-# I felt like the ability to grab all the data from a certain column would be useful, so I wrote a function for that.
-def grab_data(dataDict, column_name):
+# now that we have the whole data set in a list, we need a way to easily grab 
+# certain columns of data that we need
+def grab_data(data_dict, column_name):
     """
     Gets a certain type of data from the dataset, given the column name.
     """
@@ -99,9 +103,11 @@ def grab_data(dataDict, column_name):
         return []
     
     index = column_names.index(column_name)
-    column_data = [float(sample[index]) for sample in dataDict]
+    column_data = [float(sample[index]) for sample in data_dict]
     return column_data
 
+# below the data is now separated into the training and validation set
+# and will need to be normalized before performing any calculations
 def normalize_data(data):
     """
     Normalizes the data by subtracting the mean and dividing by the standard deviation.
@@ -119,57 +125,8 @@ def normalize_data(data):
 
     return temp_np_array.tolist()
 
-def unnormalize_data(normalized_value, mean, std_dev):
-    """
-    Unnormalizes a single value using the specified mean and standard deviation.
-
-    Parameters:
-    - normalized_value: The normalized data value.
-    - mean: The mean used for normalization.
-    - std_dev: The standard deviation used for normalization.
-
-    Returns:
-    - The unnormalized data value.
-    """
-    return (normalized_value * std_dev) + mean
-
-# Gradient Descent
-def batch_gradient_descent(x, y, thetas, alpha, goal_accuracy):
-    m = len(y)
-    while True:
-        hypothesis = x.dot(thetas)
-        errors = hypothesis - y
-        gradient = (1/m) * x.T.dot(errors)
-        new_thetas = thetas - alpha * gradient
-        accuracy = np.sum(np.abs(new_thetas - thetas))
-        
-        if accuracy <= goal_accuracy:
-            break
-        
-        thetas = new_thetas
-    
-    return thetas
-
-def calculate_MSE(x, y, thetas):
-    predictions = x.dot(thetas)
-    errors = predictions - y
-    mse = (1/(2*len(y))) * np.sum(errors ** 2)
-    return mse
-
-# Normal Equation (for part a ONLY)
-def normal_equation(x, y):
-    """
-    Calculates the thetas to predict MEDV using AGE and TAX
-
-    Parameters:
-    - x: The array that contains the AGE and TAX data from the normalized training set
-    - y: The MEDV from the normalized training set. This should be a 1D array.
-
-    Returns:
-    - The thetas needed to predict MEDV.
-    """
-    return np.linalg.inv(x.T.dot(x)).dot(x.T).dot(y)
-
+# now that the data sets are normalized, we now need to separate them by their column name
+# for each scenario
 def feed_data_into_arrays(data_dict, column_names):
     """
     Feeds the data from the data_dict into the destination_dict using the column names as keys.
@@ -192,6 +149,72 @@ def feed_data_into_arrays(data_dict, column_names):
             destination_dict[feature] = np.array(grab_data(data_dict, feature))
     return destination_dict
 
+# now that the data sets are normalized and separated using their column names,
+# we can perform gradient descent to find the theta parameters
+def batch_gradient_descent(x, y, thetas, alpha, goal_accuracy):
+    """
+    Performs the gradient descent formula to find the theta parameters
+    that are needed to make predictions.
+
+    Parameters:
+    - x: A numpy array that has all the x features that are necessary for each case.
+    - y: The MEDV from the normalized training set. This should be a 1D array.
+    - thetas: The initial thetas for each of the x features (will be starting as 0)
+    - alpha: A constant that remains at 0.01 to update the thetas with each iteration
+    - goal_accuracy: the final accuracy we want to reach (will be starting as 0.01)
+
+    Returns:
+    - The final theta parameters
+    """
+    m = len(y)
+    while True:
+        hypothesis = x.dot(thetas)
+        errors = hypothesis - y
+        gradient = (1/m) * x.T.dot(errors)
+        new_thetas = thetas - alpha * gradient
+        accuracy = np.sum(np.abs(new_thetas - thetas))
+        
+        if accuracy <= goal_accuracy:
+            break
+        
+        thetas = new_thetas
+    
+    return thetas
+
+# now that we have the theta values, we can find the mean squared error
+# and make predictions using the validation set
+def calculate_MSE(x, y, thetas):
+    """
+    Performs the mean squared error formula based upon the predictions made
+    from the final thetas found using gradient descent or the normal equation
+
+    Parameters:
+    - x: A numpy array that has all the x features that are necessary for each case.
+    - y: The MEDV from the normalized validation set. This should be a 1D array.
+    - thetas: The final thetas for each of the x features 
+
+    Returns:
+    - The mean squared error
+    """
+    predictions = x.dot(thetas)
+    errors = predictions - y
+    mse = (1/(2*len(y))) * np.sum(errors ** 2)
+    return mse
+
+# compare the final thetas found from gradient descent
+# for case 2a using the normal equation
+def normal_equation(x, y):
+    """
+    Calculates the thetas to predict MEDV using AGE and TAX
+
+    Parameters:
+    - x: The array that contains the AGE and TAX data from the normalized training set
+    - y: The MEDV from the normalized training set. This should be a 1D array.
+
+    Returns:
+    - The thetas needed to predict MEDV.
+    """
+    return np.linalg.inv(x.T.dot(x)).dot(x.T).dot(y)
 
 #-------------------------------------------------------------------------
 # Variables / loading and processing the data:
@@ -234,7 +257,7 @@ validation_set = data_dict[-50:]
 # Separate the rest of the data
 training_set = data_dict[:-50]
 
-# # normalizing training set
+# normalizing training set
 normalized_training_set = normalize_data(training_set)
 
 # normalizing validation set 
@@ -244,17 +267,14 @@ normalized_validation_set = normalize_data(validation_set)
 # PART ONE A:
 #-------------------------------------------------------------------------
 
-# AGE data
-age_data = np.array(grab_data(normalized_training_set, "AGE"))
-
-# TAX data
-tax_data = np.array(grab_data(normalized_training_set, "TAX"))
+# initialize the data arrays for the training set
+data_arrays = feed_data_into_arrays(normalized_training_set, column_names)
 
 # MEDV data 
 medv_data = np.array(grab_data(normalized_training_set, "MEDV"))
 
 # Setting up x (the features including an intercept of 1 for x0, x1 is the age, and x2 is the tax)
-x_2a = np.column_stack((np.ones_like(age_data), age_data, tax_data))
+x_2a = np.column_stack((np.ones_like(data_arrays["AGE"]), data_arrays["AGE"], data_arrays["TAX"]))
 
 # Initial theta values
 initial_thetas_2a = np.zeros(3)
@@ -263,21 +283,17 @@ initial_thetas_2a = np.zeros(3)
 # results for the theta parameters
 final_thetas_2a = batch_gradient_descent(x_2a, medv_data, initial_thetas_2a, alpha, goal_accuracy)
 
-# AGE data
-age_data_val = np.array(grab_data(normalized_validation_set, "AGE"))
-
-# TAX data
-tax_data_val = np.array(grab_data(normalized_validation_set, "TAX"))
+# initialize the data arrays for the validation set
+validation_arrays = feed_data_into_arrays(normalized_validation_set, column_names)
 
 # MEDV data 
 medv_data_val = np.array(grab_data(normalized_validation_set, "MEDV"))
 
 # Setting up x (the features including an intercept of 1 for x0, x1 is the age, and x2 is the tax)
-x_2a_val = np.column_stack((np.ones_like(age_data_val), age_data_val, tax_data_val))
+x_2a_val = np.column_stack((np.ones_like(validation_arrays["AGE"]), validation_arrays["AGE"], validation_arrays["TAX"]))
 
 # use the final thetas to calculate the mean squared error
 mse_2a = calculate_MSE(x_2a_val, medv_data_val, final_thetas_2a)
-
 
 #-------------------------------------------------------------------------
 # PART TWO B:
@@ -285,21 +301,15 @@ mse_2a = calculate_MSE(x_2a_val, medv_data_val, final_thetas_2a)
 
 # in part B, we will be factoring in all the features of the dataset.
 
-# initialize the data arrays for the training set
-data_arrays = feed_data_into_arrays(normalized_training_set, column_names)
-
 # Setting up x (the features including an intercept of 1 for x0, x1 is the crim, and x2 is the zn...etc)
 x_2b = np.column_stack((np.ones_like(data_arrays["CRIM"]), data_arrays["CRIM"], data_arrays["ZN"], data_arrays["INDUS"], data_arrays["CHAS"], data_arrays["NOX"], data_arrays["RM"], data_arrays["AGE"], data_arrays["DIS"], data_arrays["RAD"], data_arrays["TAX"], data_arrays["PTRATIO"], data_arrays["B"], data_arrays["LSTAT"]))
 
 # Initial theta values
-initial_thetas_test = np.zeros(len(data_arrays) + 1)  # +1 for the intercept
+initial_thetas_2b = np.zeros(len(data_arrays) + 1)  # +1 for the intercept
 
 # Call the function in order to get the final 
 # results for the theta parameters
-final_thetas_2b = batch_gradient_descent(x_2b, medv_data, initial_thetas_test, alpha, goal_accuracy)
-
-# initialize the data arrays for the validation set
-validation_arrays = feed_data_into_arrays(normalized_validation_set, column_names)
+final_thetas_2b = batch_gradient_descent(x_2b, medv_data, initial_thetas_2b, alpha, goal_accuracy)
 
 # setting up x (the features including an intercept of 1 for x0, x1 is the crim, and x2 is the zn...etc)
 x_2b_val = np.column_stack((np.ones_like(validation_arrays["CRIM"]), validation_arrays["CRIM"], validation_arrays["ZN"], validation_arrays["INDUS"], validation_arrays["CHAS"], validation_arrays["NOX"], validation_arrays["RM"], validation_arrays["AGE"], validation_arrays["DIS"], validation_arrays["RAD"], validation_arrays["TAX"], validation_arrays["PTRATIO"], validation_arrays["B"], validation_arrays["LSTAT"]))
@@ -316,7 +326,7 @@ mse_2b = calculate_MSE(x_2b_val, medv_data_val, final_thetas_2b)
 final_thetas_norm = normal_equation(x_2a, medv_data)
 
 # use the final thetas from the normal equation to calculate the mean squared error
-mse_norm = calculate_MSE(x_2a, medv_data, final_thetas_norm)
+mse_norm = calculate_MSE(x_2a_val, medv_data_val, final_thetas_norm)
 
 #-------------------------------------------------------------------------
 # OUTPUT:
@@ -332,11 +342,12 @@ with open(output_file_path, "w") as output_file:
     output_file.write("Multivariate Linear Regression For Boston Housing Data\n\n")
     output_file.write("PART ONE: Gradient Descent and Mean Squared Error\n")
     output_file.write("2a: Predicting MEDV based on AGE and TAX\n")
-    # Print the final theta parameters to the output file
+    # Print the final theta parameters and MSE to the output file
     output_file.write(f"Final thetas of 2a: {final_thetas_2a}\n")
     output_file.write(f"Mean Squared Error of 2a: {mse_2a}\n\n")
     # Part B
     output_file.write("2b: Predicting MEDV based on all features\n")
+    # Print the final theta parameters and MSE to the output file
     output_file.write(f"Final thetas of 2b: {final_thetas_2b}\n")
     output_file.write(f"Mean Squared Error of 2b: {mse_2b}\n\n")
     # Outputting Part Two: The theta values using the normal equation
@@ -346,4 +357,5 @@ with open(output_file_path, "w") as output_file:
     output_file.write(f"Final thetas of 2a using the normal equation: {final_thetas_norm}\n")
     output_file.write(f"Mean Squared Error of 2a using the normal equation: {mse_norm}\n")
 
+# END OF PROGRAM
 print("All results has been printed to the output.txt file found on your desktop.")
