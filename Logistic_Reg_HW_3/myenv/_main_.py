@@ -7,7 +7,11 @@
 #
 # File: _main_.py
 #
-# Purpose: 
+# Purpose: Implement and test logistic regression by using the cost and gradient
+# function to find the parameters for logistic regression using the dataset from the
+# iris.data file. Implement and find the confusion matrix by making predictions
+# using the optimal parameters found by the Broyden-Fletcher-Goldfarb-Shanno 
+# optimization algorithm from the scipy library and calculate the accuracy and precision. 
 #-------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------
@@ -15,9 +19,9 @@
 #-------------------------------------------------------------------------
 import os
 import numpy as np
-import scipy
-import random
+from scipy.optimize import minimize
 from sigmoid import sigmoid
+from sklearn.model_selection import train_test_split
 
 """ 
 For the sake of convenience, the names of the classes of the iris dataset are as follows:
@@ -25,7 +29,6 @@ For the sake of convenience, the names of the classes of the iris dataset are as
     2. Iris-versicolor
     3. Iris-virginica
 """
-
 
 #-------------------------------------------------------------------------
 # Functions:
@@ -66,26 +69,74 @@ def cost_function(thetas, x, y):
     m = len(y)
     # calculate the hypothesis
     hypothesis = sigmoid(np.dot(x, thetas))
+    # clip the hypothesis to avoid 0 and 1 (it gets unhappy when log is 0 or 1 so...)
+    hypothesis = np.clip(hypothesis, 1e-15, 1 - 1e-15)
     # calculate the cost
     cost = (1 / m) * np.sum(-y * np.log(hypothesis) - (1 - y) * np.log(1 - hypothesis))
     return cost
 
-# gradient descent for the logistic regression
-def gradient_descent(thetas, x, y, alpha, iterations):
+# gradient function for the logistic regression
+def gradient(thetas, x, y):
     """
-    Gradient descent for logistic regression
+    Gradient for logistic regression
     """
     # number of training examples
     m = len(y)
-    # loop through the number of iterations
-    for _ in range(iterations):
-        # calculate the hypothesis
-        hypothesis = sigmoid(np.dot(x, thetas))
-        # calculate the gradient
-        gradient = (1 / m) * np.dot(x.T, (hypothesis - y))
-        # update the thetas
-        thetas -= alpha * gradient
-    return thetas
+    # calculate the hypothesis
+    hypothesis = sigmoid(np.dot(x, thetas))
+    # calculate the gradient
+    gradient = (1 / m) * np.dot(x.T, (hypothesis - y))
+    
+    return gradient
+
+# prediction function for the logistic regression
+def predict(x, theta):
+    """
+    Predict the class label for each sample in x using the optimal thetas.
+    
+    Parameters:
+    - x: Input features 
+    - theta: the optimal thetas
+    
+    Returns:
+    - predictions: Predicted class labels 
+    """
+    # Calculate the predicted probability
+    probability = 1 / (1 + np.exp(-np.dot(x, theta)))  # P(y = 1| x; theta)
+    
+    # Convert probability to binary predictions
+    predictions = (probability >= 0.5).astype(int)
+    
+    return predictions
+
+# confusion matrix function for the logistic regression
+def confusion_matrix(predictions, y):
+    """
+    Creates the confusion matrix 
+    
+    Parameters:
+    - predictions: predictions made based on the optimal thetas and x values
+    - y: the 
+    
+    Returns:
+    - predictions: Predicted class labels 
+    """
+    TP = np.sum((predictions == 1) & (y == 1))
+    FP = np.sum((predictions == 1) & (y == 0))
+    TN = np.sum((predictions == 0) & (y == 0))
+    FN = np.sum((predictions == 0) & (y == 1))
+    
+    return TP, FP, TN, FN
+
+# accuracy function for the logistic regression
+def calculate_accuracy(TP, TN, FP, FN):
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+    return accuracy
+
+# precision function for the logistic regression
+def calculate_precision(TP, FP):
+    precision = TP / (TP + FP)
+    return precision
 
 # relative path to the data file, assuming it's on the desktop
 user_desktop = os.path.join(os.path.expanduser("~"), "Desktop")
@@ -96,25 +147,11 @@ file_path = os.path.join(user_desktop, "iris.data")
 # LOADING AND SPLITTING THE DATA PORTION
 #-------------------------------------------
 
+# Load in the data
 data = persistent_load(file_path)
 
-# Print the data list to ensure it was processed correctly
-# print(data)
-
-# Shuffle the dataset
-random.shuffle(data)
-
-# Calculate at which index do we hit 80% of the dataset
-index_80 = int(len(data) * 0.8)
-
-# Split the dataset into two parts, the training and validation set
-training_set = data[:index_80]
-validation_set = data[index_80:]
-
-#print("The training set:")
-#print(training_set)
-#print("The validation set:")
-#print(validation_set)
+# Split the dataset into training and validation sets (80% training, 20% validation) with shuffling
+training_set, validation_set = train_test_split(data, test_size=0.2, random_state=42)
 
 # Extract x features into an array
 training_set_x = np.array([datapoint[:-1] for datapoint in training_set])
@@ -128,44 +165,37 @@ validation_set_x = np.array([datapoint[:-1] for datapoint in validation_set])
 # Extract y feature into an array and convert to integers
 validation_set_y = np.array([int(datapoint[-1] == 'Iris-setosa') for datapoint in validation_set])
 
-
-# Print the first few elements of each list to verify
-print("Training set x:", training_set_x[:5], "\n")
-print("Classifications:", [datapoint[-1] for datapoint in training_set[:5]], "\n")
-print("Training set y:", training_set_y[:5], "\n")
-
-# THIS IS FOR LATER: Adding an intercept
+# Adding an intercept
 training_set_x = np.insert(training_set_x, 0, 1, axis=1)  # Add intercept term
-validation_set_x = np.column_stack([np.ones(validation_set_x.shape[0]), validation_set_x])
+validation_set_x = np.insert(validation_set_x, 0, 1, axis=1)
 
 # Initial theta values
 initial_thetas = np.zeros(training_set_x.shape[1])  # Shape[1] gives the number of columns (features)
 
-# Testing the sigmoid function
-result = sigmoid(0)
-print("Sigmoid:", result)
+# Use minimize function to optimize parameters
+result = minimize(cost_function, initial_thetas, args=(training_set_x, training_set_y), jac=gradient, method='BFGS')
 
-# part 2, we will implement the cost function and gradient descent for logistic regression
+# Retrieve the optimized parameters
+optimal_thetas = result.x
 
-def cost_function(thetas, x, y):
-    """
-    The cost function for logistic regression
-    """
-    # number of training examples
-    m = len(y)
-    # calculate the hypothesis
-    hypothesis = sigmoid(np.dot(x, thetas))
-    # calculate the cost
-    cost = (1 / m) * np.sum(-y * np.log(hypothesis) - (1 - y) * np.log(1 - hypothesis))
-    return cost
+# Predict the class labels using the estimated parameters
+predictions = predict(validation_set_x, optimal_thetas)
 
+# Get the confusion matrix
+TP, TN, FP, FN = confusion_matrix(predictions, validation_set_y)
 
-# part 2, we will implement the cost function and gradient descent for logistic regression
-# test that we have implemented the cost function correctly, ideally the result should be 0.693 for the current dataset
-cost = cost_function(initial_thetas, training_set_x, training_set_y)
-print("Cost:", cost)
+# accuracy
+accuracy = calculate_accuracy(TP, TN, FP, FN)
 
-# test the gradient descent function
-thetas = gradient_descent(initial_thetas, training_set_x, training_set_y, 0.01, 1000)
-print("Thetas:", thetas)
+# precision
+precision = calculate_precision(TP, FP)
+
+# Print all the results out
+print("Optimal thetas:", optimal_thetas)
+print("True Positive (TP): ", TP)
+print("False Positive (FP): ", FP)
+print("True Negative (TN): ", TN)
+print("False Negative (FN): ", FN)
+print("Accuracy: ", accuracy)
+print("Precision: ", precision)
 
