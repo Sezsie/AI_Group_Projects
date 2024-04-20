@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------
-# HW04: K-Means Clustering on the Iris Dataset
+# HW04: K-Means Clustering on an Example Dataset
 # CS430-01 Spring 2024
 # Authors: Garrett Thrower and Megan Jenckes
 # Date: April 20th, 2024
