@@ -1,2 +1,2 @@
 # AI_Group_Projects
-A suite of homework and practice projects done in an academic setting for an AI survey course.
+# A collection of miscellaneous machine learning projects done for an academic AI course. 
